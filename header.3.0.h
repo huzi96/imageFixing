@@ -28,6 +28,8 @@ extern Confidence * _c;
 
 extern Mat * bondary;
 
+typedef Patch* pPatch;
+
 double calculateRoundP(Mat &mask, Mat &src,const BondPoint &p);
 
 
@@ -57,7 +59,7 @@ public:
     int _x;
     int _y;
     
-    set<Patch>::iterator ptr; //指向其在按优先级排列的set中的位置
+    pPatch ptr; //指向其在按优先级排列的set中的位置
     
     BondPoint(int x,int y):_x(x),_y(y){}
     

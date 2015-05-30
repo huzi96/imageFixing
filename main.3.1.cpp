@@ -28,7 +28,6 @@ int main()
     
     chooseArea(mask,src); //在src上选中相应区域，输出至mask，255表示选择区域，0为未选择区域
     
-    
     set<BondPoint> * points = new set<BondPoint>;
     initBorder(*points); //将边界点插入points（按x,y排序）
     
