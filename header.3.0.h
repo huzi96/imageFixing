@@ -59,7 +59,7 @@ public:
     int _x;
     int _y;
     
-    pPatch ptr; //指向其在按优先级排列的set中的位置
+    pPatch ptr; //指向对应的Patch
     
     BondPoint(int x,int y):_x(x),_y(y){}
     
@@ -111,7 +111,8 @@ private:
 };
 
 
-void renewBond(Patch & prior, set<BondPoint> & points, set<Patch> & priorLevel, Mat & mask, Mat & boundary,Mat &newBondary);
+
+void renewBond(Patch & prior, set<BondPoint> & points, set<pPatch> & priorLevel, Mat & mask, Mat & boundary,Mat &newBondary);
 
 void Search(Patch & prior, Mat & src, Mat & mask, Confidence & c);
 
@@ -120,5 +121,5 @@ void ConfidenceTest(Confidence & c); //测试用
 
 void chooseArea(Mat * mask, Mat & src);
 void initBorder(set<BondPoint> & points);
-void initPriorLevel(set<BondPoint> & points, set<Patch> & PriorLevel);
+void initPriorLevel(set<BondPoint> & points, set<pPatch> & PriorLevel);
 void reFreshBond(Mat &newBondary);

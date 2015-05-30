@@ -12,7 +12,6 @@ int main()
 {
     Mat & src = _src;
     src = imread("test7.jpg");//读入目标图像
-    
     if(!_src.data) //读取文件失败
     {
         cout << "loading error." << endl;
@@ -20,37 +19,36 @@ int main()
         return 1;
     }
     //以上需要封装
-    
-    
     Mat * & mask = _mask;
     mask = new Mat(src.rows, src.cols, CV_8UC1, Scalar(0));//建立一个原图大小的单通道图像矩阵
     //CV_8UC1表示8-bit无符号单通道矩阵
     
     chooseArea(mask,src); //在src上选中相应区域，输出至mask，255表示选择区域，0为未选择区域
     
-    set<BondPoint> * points = new set<BondPoint>;
-    initBorder(*points); //将边界点插入points（按x,y排序）
+    ///set<BondPoint> * points = new set<BondPoint>;
+    set<BondPoint> points;
+    initBorder(points); //将边界点插入points（按x,y排序）
     
-    Confidence * & c = _c;
-    c = new Confidence(*mask);
-    ConfidenceTest(*c);
+    //Confidence * & c = _c;
+    _c = new Confidence(*mask);
+    ConfidenceTest(*_c);
     
     
-    set<Patch> * priorLevel = new set<Patch>; //boundary points
-    initPriorLevel(*points,*priorLevel); //计算边界点周围数据，导入set
+    set<pPatch> priorLevel; //boundary points
+    initPriorLevel(points,priorLevel); //计算边界点周围数据，导入set
     
     int n = 30;
     
     namedWindow("test");
-    while(!points->empty()) //仍有未填充的点
+    while(!points.empty()) //仍有未填充的点
     {
-        cout << "size " << points->size() << endl;;
+        cout << "size " << points.size() << endl;;
         //break;
         
-        if(priorLevel->empty())
+        if(priorLevel.empty())
             break;
         
-        const Patch * prior = &(*priorLevel->begin());
+        pPatch prior = *priorLevel.begin();
         Patch tmp = *prior;
         Search(tmp,src,*mask,*_c); //查找最优点匹配，并覆盖
         Mat newBondary;
@@ -58,7 +56,7 @@ int main()
         
         imshow("test", src);
         waitKey(0);
-        renewBond(tmp,*points,*priorLevel,*mask,*bondary,newBondary); //更新边界
+        renewBond(tmp,points,priorLevel,*mask,*bondary,newBondary); //更新边界
         newBondary.copyTo(*bondary);
     }
     

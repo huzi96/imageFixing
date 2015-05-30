@@ -84,7 +84,7 @@ void initBorder(set<BondPoint> & points)
     waitKey(0);
 }
 
-void initPriorLevel(set<BondPoint> & points, set<Patch> & PriorLevel)
+void initPriorLevel(set<BondPoint> & points, set<pPatch> & PriorLevel)
 {
     Mat & src = _src;
     Confidence & c = *_c;
@@ -97,10 +97,9 @@ void initPriorLevel(set<BondPoint> & points, set<Patch> & PriorLevel)
     
     for(;itPoint != itPointEnd; ++itPoint)
     {
-        //Patch(const BondPoint & point);
-        pair<set<Patch>::iterator,bool> pairPtr = PriorLevel.insert(Patch(*itPoint)); //是否优化，则不传递参数c，而是传值
-        
-        set<Patch>::iterator & p = (set<Patch>::iterator &)itPoint->ptr;
-        p = pairPtr.first;
+        pPatch & ptr=(pPatch &)(itPoint->ptr);
+        pPatch crt=new Patch(*itPoint);
+        PriorLevel.insert(crt);
+        ptr=crt;
     }
 }

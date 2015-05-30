@@ -22,7 +22,7 @@ void getGradiant(Mat &src, Mat &grad)
     cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
 }
 
-void renewBond(Patch & prior, set<BondPoint> & points, set<Patch> & priorLevel, Mat & mask, Mat & boundary,Mat &newBondary)
+void renewBond(Patch & prior, set<BondPoint> & points, set<pPatch> & priorLevel, Mat & mask, Mat & boundary,Mat &newBondary)
 {
     int xZero = prior.xZero()-1;
     int yZero = prior.yZero()-1;
@@ -56,9 +56,9 @@ void renewBond(Patch & prior, set<BondPoint> & points, set<Patch> & priorLevel, 
                 
                 set<BondPoint>::iterator goal = points.find(BondPoint(xZero + i, yZero + j));
                 
-                set<Patch>::iterator ruin = goal->ptr;
-                
-                priorLevel.erase(ruin);
+                pPatch ruin = goal->ptr;
+                set<pPatch>::iterator ruinIT=priorLevel.find(ruin);
+                priorLevel.erase(ruinIT);
                 points.erase(goal);
                 cout << "delete " << xZero + i << ' ' << yZero + j << endl;
             }
@@ -74,17 +74,10 @@ void renewBond(Patch & prior, set<BondPoint> & points, set<Patch> & priorLevel, 
         {
             if (*ptrNew == 255) //更新边界
             {
-                BondPoint crt(xZero + i, yZero + j);
-                pair<set<Patch>::iterator, bool> pairPtr = priorLevel.insert(Patch(crt));
-                crt.ptr = pairPtr.first;
+                BondPoint crt(xZero+i,yZero+j);
+                crt.ptr=new Patch(xZero+i,yZero+j);
                 points.insert(crt);
-                //pairPatch = priorLevel.insert(Patch(BondPoint(xZero + i,yZero + j));
                 
-                //记得给points加入iterator
-                
-                //BondPoint tmp(xZero + i,yZero + j);
-                //tmp.ptr = in;
-                //points.insert(tmp);
                 cout << "add " << xZero + i << ' ' << yZero + j << endl;
             }
         }
@@ -95,73 +88,6 @@ void renewBond(Patch & prior, set<BondPoint> & points, set<Patch> & priorLevel, 
     //那么要同时更新mask和boundary图
 }
 
-
-void renewBond(Patch & prior,set<BondPoint> & points, set<Patch> & priorLevel, Mat & mask, Mat & boundary)
-{
-    int xZero = prior.xZero();
-    int yZero = prior.yZero();
-    int size = prior.size();
-    
-    //注意size的含义！！！
-    Mat maskROI = mask(Rect(yZero, xZero, size, size));
-    Mat bondROI = boundary(Rect(yZero, xZero, size, size));
-    
-    int row = maskROI.rows;
-    int col = maskROI.cols;
-    
-    pair<set<BondPoint>,set<Patch> > pairPoint;
-    set<BondPoint>::iterator itPoint;
-    
-    pair<set<Patch>,set<Patch> > pairPatch;
-    set<Patch>::iterator itPatch;
-    
-    
-    for(int i = 0; i < row; ++i)
-    {
-        uchar * ptrMask = maskROI.ptr<uchar>(i);
-        uchar * ptrBound = bondROI.ptr<uchar>(i);
-        
-        for(int j = 0; j < col; ++j,++ptrMask,++ptrBound)
-        {
-            if(i == 0 || i == row - 1 || j == 0 || j == col - 1) //边界
-            {
-                if(*ptrMask == 255 && *ptrBound == 0) //更新边界
-                {
-                    *ptrBound = 255;
-                    
-                    //pairPatch = priorLevel.insert(Patch(BondPoint(xZero + i,yZero + j));
-                    
-                    //记得给points加入iterator
-                    
-                    //BondPoint tmp(xZero + i,yZero + j);
-                    //tmp.ptr = in;
-                    //points.insert(tmp);
-                }
-                continue;
-            }
-            
-            if(*ptrMask == 0) //未选中
-                continue;
-            
-            *ptrMask = 0; //取消选中
-            
-            if(*ptrBound == 255) //原本是边界
-            {
-                *ptrBound = 0;
-                
-                //set<BondPoint>::iterator goal = points.find(BondPoint(xZero + i,yZero + j));
-                
-                //set<Patch>::iterator ruin = goal.ptr;
-                
-                //priorLevel.erase(ruin);
-                //points.erase(goal);
-            }
-        }
-    }
-    
-    //如果该方格的边界上的点是mask中选择的区域，那么这个方格的边界就变为边界点。并将方格内部的原有边界点删除
-    //那么要同时更新mask和boundary图
-}
 
 
 
