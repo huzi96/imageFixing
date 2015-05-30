@@ -37,12 +37,13 @@ void renewBond(Patch & prior, set<BondPoint> & points, set<pPatch> & priorLevel,
     
     set<BondPoint>::iterator itPoint;
     
-    set<Patch>::iterator itPatch;
+    /*
     namedWindow("old");
     imshow("old",newROI);
     waitKey(0);
     imshow("old", bondROI);
     waitKey(0);
+     */
     for (int i = 0; i < row; ++i)
     {
         uchar * ptrNew = newROI.ptr<uchar>(i);
@@ -60,7 +61,7 @@ void renewBond(Patch & prior, set<BondPoint> & points, set<pPatch> & priorLevel,
                 set<pPatch>::iterator ruinIT=priorLevel.find(ruin);
                 priorLevel.erase(ruinIT);
                 points.erase(goal);
-                cout << "delete " << xZero + i << ' ' << yZero + j << endl;
+                //cout << "delete " << xZero + i << ' ' << yZero + j << endl;
             }
         }
     }
@@ -75,10 +76,11 @@ void renewBond(Patch & prior, set<BondPoint> & points, set<pPatch> & priorLevel,
             if (*ptrNew == 255) //更新边界
             {
                 BondPoint crt(xZero+i,yZero+j);
-                crt.ptr=new Patch(xZero+i,yZero+j);
+                crt.ptr=new Patch(crt);
+                priorLevel.insert(crt.ptr);
                 points.insert(crt);
                 
-                cout << "add " << xZero + i << ' ' << yZero + j << endl;
+                //cout << "add " << xZero + i << ' ' << yZero + j << endl;
             }
         }
     }
@@ -99,19 +101,20 @@ double getSimilar(Patch & prior, int x, int y, Mat & mask, Mat & src)
     Point anchor(x, y);
     double sigmaOfPixel = 0;
     //Mat patchROI(mask, Rect(prior.xZero(), prior.yZero(), prior.size(), prior.size()));
-    Point patchAnchor(prior.xZero(), prior.yZero());
+    
     
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
             //
+            Point patchAnchor(prior.xZero()+i, prior.yZero()+j);
             Point p(x + i, y + j);
             if (mask.at<uchar>(p)==255)
             {
-                return -1;
+                return -100000;
             }
-            if (mask.at<uchar>(p)!=255)
+            if (mask.at<uchar>(patchAnchor)!=255)
             {
                 pointCNT++;
                 for (int k = 0; k < 3; k++)
@@ -122,7 +125,7 @@ double getSimilar(Patch & prior, int x, int y, Mat & mask, Mat & src)
             }
         }
     }
-    sigmaOfPixel /= pointCNT*pointCNT*pointCNT;
+    sigmaOfPixel /= 1000000;
     //cout << sigmaOfPixel << endl;
     //没有算方差哟
     return sigmaOfPixel;
@@ -130,7 +133,7 @@ double getSimilar(Patch & prior, int x, int y, Mat & mask, Mat & src)
 
 void Search(Patch & prior, Mat & src, Mat & mask, Confidence & c)
 {
-    int chDist = 150;//100 * prior.infoEdge() + 7;
+    int chDist = 100 * prior.infoEdge() + 7;
     
     int size = prior.size(); //匹配块的大小
     
@@ -153,30 +156,35 @@ void Search(Patch & prior, Mat & src, Mat & mask, Confidence & c)
             double d = getSimilar(prior, i, j, mask, src);
             double tmp;
             tmp = exp(-d*d);
-            //cout << "tmp " << tmp << endl;;
+            //cout << "d " << d << endl;;
             if (tmp > dBest)
             {
-                dBest = tmp;
+                dBest = d;
                 xBest = i, yBest = j;//记录左上角点;
             }
         }
-    
+    cout<<"dbest "<<dBest<<endl;
     
     double newConfidence = c.getAverConfidence(xBest, yBest, size) * std::exp(-dBest*dBest);
     
+    cout << "newConficence" << newConfidence << endl;
     //填充该点，并更新置信度
     for (int i = 0; i < size; i++)
     {
         for (int j = 0; j < size; j++)
         {
-            for (int k = 0; k < 3; k++)
+            if (mask.at<uchar>(prior.xZero()+i,prior.yZero()+j)==255)
             {
-                mask.at<uchar>(prior.xZero() + i, prior.yZero() + j) = 0;
-                src.at<cv::Vec3b>(prior.xZero() + i, prior.yZero() + j)[k] = src.at<cv::Vec3b>(xBest + i, yBest + j)[k];
+                for (int k = 0; k < 3; k++)
+                {
+                
+                    mask.at<uchar>(prior.xZero() + i, prior.yZero() + j) = 0;
+                    src.at<cv::Vec3b>(prior.xZero() + i, prior.yZero() + j)[k] = src.at<cv::Vec3b>(xBest + i, yBest + j)[k];
+                }
+               
             }
             
             c[i + prior.xZero()][j + prior.yZero()] = newConfidence;
-            cout << "newConficence" << newConfidence << endl;
         }
     }
 }
@@ -204,7 +212,7 @@ double exert(double Operator[3][3], Mat &gray_image)
 
 double calculateRoundP(Mat &mask, Mat &src, const BondPoint &p)
 {
-    cout << "start" << endl;
+    //cout << "start" << endl;
     double operatorX[3][3] = {
         {-1,0,1},
         {-sqrt2,0,sqrt2},
@@ -245,7 +253,7 @@ double calculateRoundP(Mat &mask, Mat &src, const BondPoint &p)
     nY = exert(operatorY, maskROI);
     //cout << gray_image << endl;
     //cout << maskROI << endl;
-    cout << dX << ' ' << dY << ' ' << nX << ' ' << nY << endl;
+    //cout << dX << ' ' << dY << ' ' << nX << ' ' << nY << endl;
     double res = (dX*nY - dY*nX) / sqrt((dX*dX + dY*dY)*(nX*nX + nY*nY));
     return res;
 }

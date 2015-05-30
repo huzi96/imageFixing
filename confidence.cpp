@@ -82,9 +82,9 @@ double Confidence::getAverConfidence(int x,int y,int size) const
     double res = 0;
     for(int i = 0; i < size; i++)
     {
-        double * ptr = _val + (x+i)*_col + y;
+        double ptr = *(_val + (x+i)*_col + y);
         for(int j = 0; j < size; j++, ptr++)
-            res += *ptr;
+            res += ptr;
     }
     res /= (size*size);
     return res;
